@@ -20,3 +20,8 @@ sample code:
             }
             
             
+
+
+this project base on below projects:
+            https://github.com/robmikh/WPFCaptureSample
+            https://github.com/Microsoft/Windows.UI.Composition-Win32-Samples/tree/master/dotnet/WPF/ScreenCapture
