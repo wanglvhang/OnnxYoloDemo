@@ -1,0 +1,30 @@
+﻿<Window x:Class="OnnxYOLODemo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OnnxYOLODemo"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="618" Width="729" Loaded="Window_Loaded">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" >
+            <Button x:Name="btnStartCaptureYolov3" Content="Start Capture(yolov3)" Click="btnStartCaptureYolov3_Click" Margin="10" Height="26"/>
+            <Button x:Name="btnStartCaptureYolov4" Content="Start Capture(yolov4)" Click="btnStartCaptureYolov4_Click" Margin="10" Height="26"/>
+            <Button x:Name="btnStopCapture" Content="Stop Capture" Click="btnStopCapture_Click" Margin="10" Height="26"/>
+        </StackPanel>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition></RowDefinition>
+                <RowDefinition Height="300"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Image x:Name="imgResult" Grid.Row="0"  />
+            <TextBox x:Name="txbLog" Grid.Row="1" Background="#FF212121" Foreground="#FFDADADA" FontSize="12" Margin="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"></TextBox>
+        </Grid>
+    </Grid>
+</Window>

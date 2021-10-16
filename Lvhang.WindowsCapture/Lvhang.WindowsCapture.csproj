@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Company>lvhang.site</Company>
+    <Authors>lvhang.site</Authors>
+    <Description>a tool library to capture windows desktop and window and output Direct3D11CaptureFrame frame, also provide extension methods to convert frame to bitmap or softwarebitmap.</Description>
+    <Copyright></Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
+  </ItemGroup>
+
+</Project>
