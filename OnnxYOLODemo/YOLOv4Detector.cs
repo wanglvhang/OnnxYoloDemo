@@ -18,15 +18,19 @@ namespace OnnxYOLODemo
             // Session Options
             SessionOptions options = new SessionOptions();
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_INFO;
+            options.EnableProfiling = true;
             //options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
             //options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_BASIC;
             //options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov3-10.onnx";
             //options.AppendExecutionProvider_OpenVINO(@"MYRIAD_FP16");
-            options.AppendExecutionProvider_DML(0);
-            //options.AppendExecutionProvider_CPU(0);
+            //options.AppendExecutionProvider_DML(0);
+            options.AppendExecutionProvider_CPU(0);
 
             // create inference session
             _onnxSession = new InferenceSession(model_path, options);
+
+            var providers = OrtEnv.Instance().GetAvailableProviders();
+
         }
 
 
@@ -63,6 +67,13 @@ namespace OnnxYOLODemo
             return bitmapOrg;
 
 
+        }
+
+
+        public void Stop()
+        {
+            _onnxSession.EndProfiling();
+            _onnxSession.Dispose();
         }
 
     }

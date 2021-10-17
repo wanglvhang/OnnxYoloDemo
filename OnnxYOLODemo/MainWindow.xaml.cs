@@ -42,7 +42,7 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov4_Click(object sender, RoutedEventArgs e)
         {
-            this._yolovDetector = new YOLOv4Detector($".\\Models\\yolov4.onnx");
+            this._yolovDetector = new YOLOv4Detector($".\\Models\\yolov4_raw.onnx");
 
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
@@ -58,6 +58,7 @@ namespace OnnxYOLODemo
         private void btnStopCapture_Click(object sender, RoutedEventArgs e)
         {
             _captureSession.StopCapture();
+            _yolovDetector.Stop();
         }
 
 

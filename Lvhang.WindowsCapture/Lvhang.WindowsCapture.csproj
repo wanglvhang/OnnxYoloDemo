@@ -6,9 +6,12 @@
     <Company>lvhang.site</Company>
     <Authors>lvhang.site</Authors>
     <Description>a tool library to capture windows desktop and window and output Direct3D11CaptureFrame frame, also provide extension methods to convert frame to bitmap or softwarebitmap.</Description>
-    <Copyright></Copyright>
+    <Copyright>lvhang.site</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/wanglvhang/OnnxYoloDemo/tree/main/Lvhang.WindowsCapture</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/wanglvhang/OnnxYoloDemo/tree/main/Lvhang.WindowsCapture</RepositoryUrl>
+    <RepositoryType>github</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>

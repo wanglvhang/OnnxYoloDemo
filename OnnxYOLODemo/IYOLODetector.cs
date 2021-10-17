@@ -8,6 +8,8 @@ namespace OnnxYOLODemo
     interface IYOLODetector
     {
         Bitmap Inference(Bitmap srouce,out ProcessTime ptime);
+
+        void Stop();
     }
 
 
