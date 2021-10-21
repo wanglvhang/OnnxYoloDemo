@@ -1,6 +1,8 @@
 ﻿using Lvhang.WindowsCapture;
 using System;
 using System.Diagnostics;
+using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace OnnxYOLODemo
@@ -32,7 +34,7 @@ namespace OnnxYOLODemo
 
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
-                MinFrameInterval = 50,
+                MinFrameInterval = 100,
             });
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
@@ -42,11 +44,11 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov4_Click(object sender, RoutedEventArgs e)
         {
-            this._yolovDetector = new YOLOv4Detector($".\\Models\\yolov4_raw.onnx");
+            this._yolovDetector = new YOLOv4Detector($".\\Models\\yolov4.onnx");
 
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
-                MinFrameInterval = 50,
+                MinFrameInterval = 100,
             });
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
@@ -71,24 +73,41 @@ namespace OnnxYOLODemo
             sw.Stop();
             this.PrintOutput($"frame to bitmap cost {sw.ElapsedMilliseconds}ms");
 
+            //Task.Run(new Action( ()=> {
+
+            //    InferenceWorkLoad(bitmap);
+
+            //}));
 
 
-            sw.Reset();sw.Start();
-            var result_bitmap = this._yolovDetector.Inference(bitmap,out ProcessTime ptime);
+            InferenceWorkLoad(bitmap);
+
+
+        }
+
+
+        private void InferenceWorkLoad(Bitmap bitmap)
+        {
+
+            var sw = new Stopwatch();
+
+            sw.Start();
+            this._yolovDetector.Inference(bitmap, out ProcessTime ptime);
             sw.Stop();
             this.PrintOutput($"Inference cost {sw.ElapsedMilliseconds}ms, resize:{ptime.ResizeBitmap}|totensor:{ptime.BitmapToTensor}|onnx:{ptime.Inference}|draw:{ptime.DrawResult}");
-            sw.Reset();
 
 
+            sw.Reset(); sw.Start();
             this.imgResult.Source = bitmap.ToImageSource();
-
-
+            sw.Stop();
+            this.PrintOutput($"set image cost {sw.ElapsedMilliseconds}ms");
 
         }
 
 
         public void PrintOutput(string line, bool newline = true)
         {
+
             //在输入内容前添加时间
             if (newline) this.txbLog.AppendText("\r\n");
             this.txbLog.AppendText($"【{DateTime.Now.ToString("HH:mm:ss-fff")}】{line}");

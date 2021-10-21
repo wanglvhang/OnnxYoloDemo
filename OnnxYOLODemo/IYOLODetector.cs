@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OnnxYOLODemo
 {
     interface IYOLODetector
     {
-        Bitmap Inference(Bitmap srouce,out ProcessTime ptime);
+        void Inference(Bitmap srouce,out ProcessTime ptime);
 
         void Stop();
     }

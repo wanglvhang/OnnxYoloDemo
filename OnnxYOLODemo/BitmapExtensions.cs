@@ -1,4 +1,6 @@
 ﻿using Microsoft.ML.OnnxRuntime.Tensors;
+using OpenCvSharp;
+using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -6,6 +8,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -14,30 +17,6 @@ namespace OnnxYOLODemo
 {
     public static class BitmapExtensions
     {
-
-
-        //public static Tensor<float> ToOnnxDenseTensor_13hw(this Bitmap bitmap)
-        //{
-
-        //    Tensor<float> tensor = new DenseTensor<float>(new[] { 1, 3, bitmap.Height, bitmap.Width });
-
-        //    //读取bitmap 像素
-        //    for (int x = 0; x < bitmap.Width; x++)
-        //    {
-        //        for (int y = 0; y < bitmap.Width; y++)
-        //        {
-        //            var pixel = bitmap.GetPixel(x, y);
-
-        //            tensor[0, 0, y, x] = pixel.B / 255f;
-        //            tensor[0, 1, y, x] = pixel.G / 255f;
-        //            tensor[0, 2, y, x] = pixel.R / 255f;
-        //        }
-        //    }
-
-        //    return tensor;
-
-        //}
-
 
         //for yolov3
         public static Tensor<float> ToOnnxTensor_13hw(this Bitmap bitmap)
@@ -48,19 +27,30 @@ namespace OnnxYOLODemo
             var db = new DirectReadBitmap(bitmap);
 
             //读取bitmap 像素  bytes [B,G,R,A]
-            for (int x = 0; x < bitmap.Width; x++)
+            Parallel.For(0, bitmap.Height, (idx, state) =>
             {
-                for (int y = 0; y < bitmap.Width; y++)
-                {
-                    var pixel = db.GetPixel(x, y);
 
-                    tensor[0, 0, y, x] = pixel.B / 255f;
-                    tensor[0, 1, y, x] = pixel.G / 255f;
-                    tensor[0, 2, y, x] = pixel.R / 255f;
-                }
-            }
+                WriteBitmapToTensor(db, tensor, idx);
+
+            });
 
             return tensor;
+
+        }
+
+
+        public static void WriteBitmapToTensor(DirectReadBitmap directbitmap, Tensor<float> tensor, int row)
+        {
+
+            for (int x = 0; x < directbitmap.Width; x++)
+            {
+                var pixel = directbitmap.GetPixel(x, row);
+
+                tensor[0, 0, row, x] = pixel.B / 255f;
+                tensor[0, 1, row, x] = pixel.G / 255f;
+                tensor[0, 2, row, x] = pixel.R / 255f;
+
+            }
 
         }
 
@@ -117,29 +107,6 @@ namespace OnnxYOLODemo
             }
             return data;
         }
-
-
-
-        //public static ImageSource ToImageSource(this Bitmap bitmap)
-        //{
-        //    var handle = bitmap.GetHbitmap();
-        //    try
-        //    {
-        //        return Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, System.Windows.Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-        //    }
-        //    finally
-        //    {
-        //        DeleteObject(handle);
-        //    }
-        //}
-
-
-
-
-        ////If you get 'dllimport unknown'-, then add 'using System.Runtime.InteropServices;'
-        //[DllImport("gdi32.dll", EntryPoint = "DeleteObject")]
-        //[return: MarshalAs(UnmanagedType.Bool)]
-        //public static extern bool DeleteObject([In] IntPtr hObject);
 
 
     }

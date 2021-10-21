@@ -28,7 +28,7 @@ namespace OnnxYOLODemo
 
             var bitmap_data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
-            var bitmap_bytes = new byte[Math.Abs(bitmap_data.Stride) * source.Height ];
+            var bitmap_bytes = new byte[Math.Abs(bitmap_data.Stride) * source.Height];
 
             //copy bytes to pixels
             Marshal.Copy(bitmap_data.Scan0, bitmap_bytes, 0, bitmap_bytes.Length);
@@ -38,6 +38,8 @@ namespace OnnxYOLODemo
                 //bytes[B, G, R, A]
                 var p_idx = idx / 4;
                 var color = Color.FromArgb(bitmap_bytes[idx + 2], bitmap_bytes[idx + 1], bitmap_bytes[idx]);
+
+
                 Pixels[p_idx] = color;
             }
 
@@ -64,5 +66,6 @@ namespace OnnxYOLODemo
             Disposed = true;
             Bitmap.Dispose();
         }
+
     }
 }

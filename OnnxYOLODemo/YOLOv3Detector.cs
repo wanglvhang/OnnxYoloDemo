@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OnnxYOLODemo
 {
@@ -23,20 +24,24 @@ namespace OnnxYOLODemo
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_INFO;
             //options.EnableProfiling = true;
             //options.ProfileOutputPathPrefix = "yolov3_profile";
-            options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
-            options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
-            options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov3-10.onnx";
-            //options.AppendExecutionProvider_OpenVINO(@"MYRIAD_FP16");
-            options.AppendExecutionProvider_DML(0);
+
+            //options.IntraOpNumThreads = 2;
+            //options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
+            //options.InterOpNumThreads = 6;
+            //options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+            //options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov3-10.onnx";
             //options.AppendExecutionProvider_CPU(0);
+
+
+            options.AppendExecutionProvider_DML(0);
+
 
             // create inference session
             _onnxSession = new InferenceSession(model_path, options);
         }
 
 
-
-        public Bitmap Inference(Bitmap bitmapOrg, out ProcessTime ptime)
+        public void Inference(Bitmap bitmapOrg, out ProcessTime ptime)
         {
             ptime = new ProcessTime();
 
@@ -123,7 +128,7 @@ namespace OnnxYOLODemo
             ptime.DrawResult = sw.ElapsedMilliseconds;
 
 
-            return bitmapOrg;
+            //return bitmapOrg;
         }
 
         public void Stop()

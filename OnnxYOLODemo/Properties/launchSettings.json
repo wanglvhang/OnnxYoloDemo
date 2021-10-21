@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OnnxYOLODemo": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}
