@@ -13,9 +13,12 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" >
-            <Button x:Name="btnStartCaptureYolov3" Content="Start Capture(yolov3)" Click="btnStartCaptureYolov3_Click" Margin="10" Height="26"/>
-            <Button x:Name="btnStartCaptureYolov4" Content="Start Capture(yolov4)" Click="btnStartCaptureYolov4_Click" Margin="10" Height="26"/>
+            <Button x:Name="btnStartCaptureYolov3" Content="Detect(yolov3/DML)" Click="btnStartCaptureYolov3_Click" Margin="10" Height="26"/>
+            <Button x:Name="btnStartCaptureYolov4" Content="Detect(yolov4/DML)" Click="btnStartCaptureYolov4_Click" Margin="10" Height="26"/>
+            <Button x:Name="btnStartCaptureYolov5" Content="Detect(yolov5/DML)" Click="btnStartCaptureYolov5_Click" Margin="10" Height="26"/>
+            <Button x:Name="btnStartCaptureYolov5_cpu" Content="Start Detect(yolov5/cpu)" Click="btnStartCaptureYolov5_cpu_Click"  Margin="10" Height="26"/>
             <Button x:Name="btnStopCapture" Content="Stop Capture" Click="btnStopCapture_Click" Margin="10" Height="26"/>
+            
         </StackPanel>
 
         <Grid Grid.Column="1">

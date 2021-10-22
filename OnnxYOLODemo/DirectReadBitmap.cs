@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace OnnxYOLODemo
 {
@@ -26,29 +27,26 @@ namespace OnnxYOLODemo
 
             Pixels = new Color[source.Width * source.Height];
 
-            var bitmap_data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            var bitmap_data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
 
             var bitmap_bytes = new byte[Math.Abs(bitmap_data.Stride) * source.Height];
 
             //copy bytes to pixels
             Marshal.Copy(bitmap_data.Scan0, bitmap_bytes, 0, bitmap_bytes.Length);
 
-            for (var idx = 0; idx <= bitmap_bytes.Length - 4; idx += 4)
-            {
-                //bytes[B, G, R, A]
-                var p_idx = idx / 4;
-                var color = Color.FromArgb(bitmap_bytes[idx + 2], bitmap_bytes[idx + 1], bitmap_bytes[idx]);
+            Parallel.For(0, Pixels.Length, (p_idx, state) => {
 
-
+                var color = Color.FromArgb(bitmap_bytes[p_idx * 3 + 2], bitmap_bytes[p_idx * 3 + 1], bitmap_bytes[p_idx*3]);
                 Pixels[p_idx] = color;
-            }
+
+            });
+
 
             source.UnlockBits(bitmap_data);
 
             //var stream = new MemoryStream(bitmap_bytes);
             //var bmp = new Bitmap(stream);
             //bmp.Save($".\\result_images\\{new Random().Next()}.png");
-
 
         }
 

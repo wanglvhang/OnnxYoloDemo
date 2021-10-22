@@ -1,7 +1,10 @@
 ﻿using Lvhang.WindowsCapture;
+using Microsoft.ML.OnnxRuntime.Tensors;
+using OpenCvSharp.Extensions;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -15,6 +18,10 @@ namespace OnnxYOLODemo
 
         private WindowsCaptureSession _captureSession;
         private IYOLODetector _yolovDetector;
+        //private Thread _workThread;
+        //private Task<Bitmap> _workTask;
+        //private SerialQueue _taskQueue;
+        //private OpenCvSharp.Window cvWindow;
 
         public MainWindow()
         {
@@ -24,17 +31,33 @@ namespace OnnxYOLODemo
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            //this.cvWindow = new OpenCvSharp.Window();
+
+            //var array = new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 };
+            //var ms = new Memory<float>(array);
+
+            //var tensor = new DenseTensor<float>(ms, new int[] { 1, 2, 3, 3 });
+
+            var os = Environment.OSVersion;
+
+            if(os.Version.Build < 18362)
+            {
+                MessageBox.Show("该程序需要Windows 10 Build 18362 以上版本，请更新系统。");
+                this.Close();
+            }
 
         }
 
 
-        private async void btnStartCaptureYolov3_Click(object sender, RoutedEventArgs e)
+        private void btnStartCaptureYolov3_Click(object sender, RoutedEventArgs e)
         {
-            this._yolovDetector = new YOLOv3Detector($".\\Models\\yolov3-10.onnx");
+            this._captureSession?.StopCapture();
+
+            this._yolovDetector = new YOLOv3Detector($".\\Models\\yolov3-10.onnx",true);
 
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
-                MinFrameInterval = 100,
+                MinFrameInterval = 110,
             });
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
@@ -44,7 +67,41 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov4_Click(object sender, RoutedEventArgs e)
         {
+            this._captureSession?.StopCapture();
+
             this._yolovDetector = new YOLOv4Detector($".\\Models\\yolov4.onnx");
+
+            _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
+            {
+                MinFrameInterval = 100,
+            });
+            _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
+
+            _captureSession.PickAndCapture();
+        }
+
+
+        private void btnStartCaptureYolov5_Click(object sender, RoutedEventArgs e)
+        {
+            this._captureSession?.StopCapture();
+
+            this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5s.onnx", true);
+
+            _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
+            {
+                MinFrameInterval = 100,
+            });
+            _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
+
+            _captureSession.PickAndCapture();
+        }
+
+
+        private void btnStartCaptureYolov5_cpu_Click(object sender, RoutedEventArgs e)
+        {
+            this._captureSession?.StopCapture();
+
+            this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5s.onnx", false);
 
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
@@ -59,49 +116,50 @@ namespace OnnxYOLODemo
 
         private void btnStopCapture_Click(object sender, RoutedEventArgs e)
         {
-            _captureSession.StopCapture();
-            _yolovDetector.Stop();
+            _captureSession?.StopCapture();
         }
 
 
-        private async void CaptureSession_OnFrameArrived(Windows.Graphics.Capture.Direct3D11CaptureFrame obj)
+        private async void CaptureSession_OnFrameArrived(Windows.Graphics.Capture.Direct3D11CaptureFrame frame)
         {
+            try
+            {
 
-            var sw = new Stopwatch();
-            sw.Start();
-            var bitmap = obj.ToBitmap();
-            sw.Stop();
-            this.PrintOutput($"frame to bitmap cost {sw.ElapsedMilliseconds}ms");
-
-            //Task.Run(new Action( ()=> {
-
-            //    InferenceWorkLoad(bitmap);
-
-            //}));
+                var sw = new Stopwatch();
+                sw.Start();
+                var source = frame.ToBitmap();
+                sw.Stop();
+                //this.PrintOutput($"frameToBitmap:{sw.ElapsedMilliseconds}ms", true);
+                var ftb = sw.ElapsedMilliseconds;
 
 
-            InferenceWorkLoad(bitmap);
+                sw.Reset(); sw.Start();
+                var ptime = await this._yolovDetector.InferenceAsync(source);
+                sw.Stop();
+                var detect = sw.ElapsedMilliseconds;
+                //this.PrintOutput($"Inference:{sw.ElapsedMilliseconds}ms, resize:{ptime.ResizeBitmapCost}|totensor:{ptime.BitmapToTensorCost}|onnx:{ptime.InferenceCost}|draw:{ptime.DrawResultCost}", false); ;
 
 
-        }
+                sw.Reset(); sw.Start();
+                this.imgResult.Source = source.ToImageSource();
+                sw.Stop();
+                var showbitmap = sw.ElapsedMilliseconds;
+                //this.PrintOutput($"show:{sw.ElapsedMilliseconds}ms", false);
 
+                this.PrintOutput($"ftb:{ftb}ms|detect:{detect}ms(resize:{ptime.ResizeBitmapCost}|totensor:{ptime.BitmapToTensorCost}|onnx:{ptime.InferenceCost}|draw:{ptime.DrawResultCost})|show:{showbitmap}ms [total:{ftb+detect+showbitmap}ms]");
 
-        private void InferenceWorkLoad(Bitmap bitmap)
-        {
+            }
+            catch (Exception ex)
+            {
+                _captureSession?.StopCapture();
+                _captureSession = null;
+                _yolovDetector = null;
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
 
-            var sw = new Stopwatch();
-
-            sw.Start();
-            this._yolovDetector.Inference(bitmap, out ProcessTime ptime);
-            sw.Stop();
-            this.PrintOutput($"Inference cost {sw.ElapsedMilliseconds}ms, resize:{ptime.ResizeBitmap}|totensor:{ptime.BitmapToTensor}|onnx:{ptime.Inference}|draw:{ptime.DrawResult}");
-
-
-            sw.Reset(); sw.Start();
-            this.imgResult.Source = bitmap.ToImageSource();
-            sw.Stop();
-            this.PrintOutput($"set image cost {sw.ElapsedMilliseconds}ms");
-
+            }
         }
 
 
@@ -109,8 +167,15 @@ namespace OnnxYOLODemo
         {
 
             //在输入内容前添加时间
-            if (newline) this.txbLog.AppendText("\r\n");
-            this.txbLog.AppendText($"【{DateTime.Now.ToString("HH:mm:ss-fff")}】{line}");
+            if (newline)
+            {
+                this.txbLog.AppendText("\r\n");
+                this.txbLog.AppendText($"【{DateTime.Now.ToString("HH:mm:ss-fff")}】{line}");
+            }
+            else
+            {
+                this.txbLog.AppendText($"{line}");
+            }
             this.txbLog.ScrollToEnd();
 
             //控制行数， 每次达到1000行时，删除前300行

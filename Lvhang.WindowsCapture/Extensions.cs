@@ -4,8 +4,10 @@ using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -75,7 +77,7 @@ namespace Lvhang.WindowsCapture
         {
             var bitmap = frame.ToBitmap();
             Stream memoryStream = new MemoryStream();
-            bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
+            bitmap.Save(memoryStream, ImageFormat.Png);
 
             return memoryStream;
         }
@@ -119,6 +121,7 @@ namespace Lvhang.WindowsCapture
 
         public static Bitmap Resize(this Bitmap source, int new_width, int new_height)
         {
+
             float w_scale = (float)new_width / source.Width;
             float h_scale = (float)new_height / source.Height;
 
@@ -131,20 +134,42 @@ namespace Lvhang.WindowsCapture
             var pad_dims_w = (new_width - nw) / 2;
             var pad_dims_h = (new_height - nh) / 2;
 
-            var new_bitmap = new Bitmap(new_width, new_height);
+
+            var new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
 
             using (var g = Graphics.FromImage(new_bitmap))
             {
-                g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+                g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
 
                 g.DrawImage(source, new Rectangle(pad_dims_w, pad_dims_h, nw, nh),
                     0, 0, source.Width, source.Height, GraphicsUnit.Pixel);
             }
 
             return new_bitmap;
+        }
+
+
+        public static Bitmap ResizeWithoutPadding(this Bitmap source, int new_width, int new_height)
+        {
+
+            var new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
+
+            using (var g = Graphics.FromImage(new_bitmap))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+                g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
+
+                g.DrawImage(source, new Rectangle(0, 0, new_width, new_height),
+                    0, 0, source.Width, source.Height, GraphicsUnit.Pixel);
+            }
+
+            return new_bitmap;
+
         }
 
 

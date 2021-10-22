@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace OnnxYOLODemo
 {
@@ -15,48 +17,71 @@ namespace OnnxYOLODemo
     {
 
         private InferenceSession _onnxSession;
+        private Mutex _sessionMutex = new Mutex();
 
 
-        public YOLOv3Detector(string model_path)
+        public YOLOv3Detector(string model_path, bool useDirectML)
         {
             // Session Options
             SessionOptions options = new SessionOptions();
-            options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_INFO;
+            options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR;
             //options.EnableProfiling = true;
             //options.ProfileOutputPathPrefix = "yolov3_profile";
 
-            //options.IntraOpNumThreads = 2;
-            //options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
-            //options.InterOpNumThreads = 6;
-            //options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
-            //options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov3-10.onnx";
-            //options.AppendExecutionProvider_CPU(0);
-
-
-            options.AppendExecutionProvider_DML(0);
-
+            if (useDirectML)
+            {
+                options.AppendExecutionProvider_DML(0);
+            }
+            else
+            {
+                //options.IntraOpNumThreads = 2;
+                //options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
+                //options.InterOpNumThreads = 6;
+                //options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+                //options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov3-10.onnx";
+                options.AppendExecutionProvider_CPU(0);
+            }
 
             // create inference session
             _onnxSession = new InferenceSession(model_path, options);
+
+
         }
 
 
-        public void Inference(Bitmap bitmapOrg, out ProcessTime ptime)
+        public Task<ProcessDetail> InferenceAsync(Bitmap bitmapOrg)
         {
-            ptime = new ProcessTime();
+
+            return Task.Run(() =>
+            {
+                ProcessDetail ptime = null;
+                if (this._sessionMutex.WaitOne())
+                {
+                    ptime = Inference(bitmapOrg);
+                    this._sessionMutex.ReleaseMutex();
+
+                }
+                return ptime;
+
+            });
+        }
+
+
+        public ProcessDetail Inference(Bitmap bitmapOrg)
+        {
+            var ptime = new ProcessDetail();
 
             var sw = new Stopwatch();
             sw.Start();
-            var new_image = bitmapOrg.Resize(416, 416);
+            var resized_image = bitmapOrg.Resize(416, 416);
             sw.Stop();
-            ptime.ResizeBitmap = sw.ElapsedMilliseconds;
+            ptime.ResizeBitmapCost = sw.ElapsedMilliseconds;
 
-            //this.PrintOutput($"resized image: width:{new_image.Width} height:{new_image.Height}");
 
             sw.Reset(); sw.Start();
-            var input_tensor = new_image.ToOnnxTensor_13hw();
+            var input_tensor = resized_image.FastToOnnxTensor_13hw();
             sw.Stop();
-            ptime.BitmapToTensor = sw.ElapsedMilliseconds;
+            ptime.BitmapToTensorCost = sw.ElapsedMilliseconds;
 
 
             //Get the Image Shape
@@ -71,9 +96,9 @@ namespace OnnxYOLODemo
 
 
             sw.Reset(); sw.Start();
-            using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _onnxSession.Run(container);
+            IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _onnxSession.Run(container);
             sw.Stop();
-            ptime.Inference = sw.ElapsedMilliseconds;
+            ptime.InferenceCost = sw.ElapsedMilliseconds;
 
 
             sw.Reset(); sw.Start();
@@ -113,7 +138,7 @@ namespace OnnxYOLODemo
             {
                 foreach (var p in predictions)
                 {
-                    g.DrawRectangle(new System.Drawing.Pen(System.Drawing.Brushes.Red, 6),
+                    g.DrawRectangle(new System.Drawing.Pen(System.Drawing.Brushes.Yellow, 4),
                         new System.Drawing.Rectangle((int)p.Box.Xmin,
                         (int)p.Box.Ymin,
                         (int)(p.Box.Xmax - p.Box.Xmin),
@@ -125,16 +150,16 @@ namespace OnnxYOLODemo
             }
 
             sw.Stop();
-            ptime.DrawResult = sw.ElapsedMilliseconds;
+            ptime.DrawResultCost = sw.ElapsedMilliseconds;
 
 
-            //return bitmapOrg;
+            return ptime;
         }
 
         public void Stop()
         {
-            _onnxSession.EndProfiling();
-            _onnxSession.Dispose();
+            //_onnxSession?.EndProfiling();
+            _onnxSession?.Dispose();
         }
     }
 }

@@ -8,20 +8,22 @@ namespace OnnxYOLODemo
 {
     interface IYOLODetector
     {
-        void Inference(Bitmap srouce,out ProcessTime ptime);
+        ProcessDetail Inference(Bitmap img);
+
+        Task<ProcessDetail> InferenceAsync(Bitmap bitmapOrg);
 
         void Stop();
     }
 
 
-    public class ProcessTime
+    public class ProcessDetail
     {
-        public long ResizeBitmap { get; set; }
+        public long ResizeBitmapCost { get; set; }
 
-        public long BitmapToTensor { get; set; }
+        public long BitmapToTensorCost { get; set; }
 
-        public long Inference { get; set; }
+        public long InferenceCost { get; set; }
 
-        public long DrawResult { get; set; }
+        public long DrawResultCost { get; set; }
     }
 }
