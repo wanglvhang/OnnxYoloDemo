@@ -11,9 +11,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using OpenCvSharp.Extensions;
 using Size = OpenCvSharp.Size;
+using Windows.Graphics.Capture;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace OnnxYOLODemo
 {
@@ -77,6 +80,40 @@ namespace OnnxYOLODemo
         }
 
 
+        public static async Task<SoftwareBitmap> ToSoftwareBitmap(this Direct3D11CaptureFrame frame)
+        {
+            var sb = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface);
+
+            return sb;
+
+        }
+
+
+        public static async Task<byte[]> ToBytes(this SoftwareBitmap sbitmap)
+        {
+
+            byte[] array = null;
+
+            // First: Use an encoder to copy from SoftwareBitmap to an in-mem stream (FlushAsync)
+            // Next:  Use ReadAsync on the in-mem stream to get byte[] array
+
+            using (var ms = new InMemoryRandomAccessStream())
+            {
+                BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, ms);
+                encoder.SetSoftwareBitmap(sbitmap);
+
+                try
+                {
+                    await encoder.FlushAsync();
+                }
+                catch (Exception ex) { return new byte[0]; }
+
+                array = new byte[ms.Size];
+                await ms.ReadAsync(array.AsBuffer(), (uint)ms.Size, InputStreamOptions.None);
+            }
+            return array;
+
+        }
 
 
         public static Tensor<float> ToOnnxTensor_1hw3(this Bitmap bitmap)

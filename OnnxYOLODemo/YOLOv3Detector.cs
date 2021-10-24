@@ -17,7 +17,6 @@ namespace OnnxYOLODemo
     {
 
         private InferenceSession _onnxSession;
-        private Mutex _sessionMutex = new Mutex();
 
 
         public YOLOv3Detector(string model_path, bool useDirectML)
@@ -44,9 +43,8 @@ namespace OnnxYOLODemo
 
             // create inference session
             _onnxSession = new InferenceSession(model_path, options);
-
-
         }
+
 
 
         public Task<ProcessDetail> InferenceAsync(Bitmap bitmapOrg)
@@ -54,14 +52,21 @@ namespace OnnxYOLODemo
 
             return Task.Run(() =>
             {
-                ProcessDetail ptime = null;
-                if (this._sessionMutex.WaitOne())
-                {
-                    ptime = Inference(bitmapOrg);
-                    this._sessionMutex.ReleaseMutex();
+                //ProcessDetail ptime = new ptime;
+                //if (this._sessionMutex.WaitOne())
+                //{
+                //    ptime = Inference(bitmapOrg);
+                //    this._sessionMutex.ReleaseMutex();
 
+                //}
+                //return ptime;
+
+
+                lock (this._onnxSession)
+                {
+                    var ptime = Inference(bitmapOrg);
+                    return ptime;
                 }
-                return ptime;
 
             });
         }
@@ -69,19 +74,21 @@ namespace OnnxYOLODemo
 
         public ProcessDetail Inference(Bitmap bitmapOrg)
         {
-            var ptime = new ProcessDetail();
+            //var ptime = new ProcessDetail();
 
             var sw = new Stopwatch();
             sw.Start();
             var resized_image = bitmapOrg.Resize(416, 416);
             sw.Stop();
-            ptime.ResizeBitmapCost = sw.ElapsedMilliseconds;
+            //ptime.ResizeBitmapCost = sw.ElapsedMilliseconds;
+            var pd = new ProcessDetail(Thread.CurrentThread.ManagedThreadId, sw.ElapsedMilliseconds, 0, 0, 0);
 
 
             sw.Reset(); sw.Start();
             var input_tensor = resized_image.FastToOnnxTensor_13hw();
             sw.Stop();
-            ptime.BitmapToTensorCost = sw.ElapsedMilliseconds;
+            //ptime.BitmapToTensorCost = sw.ElapsedMilliseconds;
+            pd = pd with { ToTensorCost = sw.ElapsedMilliseconds };
 
 
             //Get the Image Shape
@@ -98,7 +105,8 @@ namespace OnnxYOLODemo
             sw.Reset(); sw.Start();
             IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _onnxSession.Run(container);
             sw.Stop();
-            ptime.InferenceCost = sw.ElapsedMilliseconds;
+            //ptime.InferenceCost = sw.ElapsedMilliseconds;
+            pd = pd with { InferenceCost = sw.ElapsedMilliseconds };
 
 
             sw.Reset(); sw.Start();
@@ -150,10 +158,11 @@ namespace OnnxYOLODemo
             }
 
             sw.Stop();
-            ptime.DrawResultCost = sw.ElapsedMilliseconds;
+            //ptime.DrawResultCost = sw.ElapsedMilliseconds;
+            pd = pd with { DrawCost = sw.ElapsedMilliseconds };
 
 
-            return ptime;
+            return pd;
         }
 
         public void Stop()
@@ -161,5 +170,7 @@ namespace OnnxYOLODemo
             //_onnxSession?.EndProfiling();
             _onnxSession?.Dispose();
         }
+
+
     }
 }

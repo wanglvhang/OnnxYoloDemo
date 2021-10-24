@@ -53,10 +53,11 @@ namespace Lvhang.WindowsCapture
                      out DataStream stream);
 
                 //处理bitmap padding
-                var bitmap_width = staging.Description.Width;
-                var bitmap_stride = bitmap_width % 32 == 0 ? bitmap_width * 4 : (bitmap_width + (32 - (bitmap_width % 32))) * 4;
+                //var bitmap_width = staging.Description.Width;
+                //var bitmap_stride = bitmap_width % 32 == 0 ? bitmap_width * 4 : (bitmap_width + (32 - (bitmap_width % 32))) * 4;
+                //var bitmap_stride = dataBox.RowPitch;
 
-                var bitmap = new System.Drawing.Bitmap(staging.Description.Width, staging.Description.Height, bitmap_stride,
+                var bitmap = new System.Drawing.Bitmap(staging.Description.Width, staging.Description.Height, dataBox.RowPitch,
                      System.Drawing.Imaging.PixelFormat.Format32bppArgb, dataBox.DataPointer);
 
                 return bitmap;
@@ -71,7 +72,6 @@ namespace Lvhang.WindowsCapture
             }
 
         }
-
 
         public static Stream ToBitmapStream(this Direct3D11CaptureFrame frame)
         {
@@ -103,6 +103,15 @@ namespace Lvhang.WindowsCapture
             }
 
         }
+
+
+        //public static byte[] ToBytes(this SoftwareBitmap sbitmap)
+        //{
+        //    MemoryStream ms = new MemoryStream();
+        //    WriteableBitmap wb = new WriteableBitmap(sbitmap);
+        //    wb.SaveJpeg(ms, myimage.PixelWidth, myimage.PixelHeight, 0, 100);
+        //    byte[] imageBytes = ms.ToArray();
+        //}
 
 
         public static BitmapImage ToImageSource(this Bitmap bitmap)

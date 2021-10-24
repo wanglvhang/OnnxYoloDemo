@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using Windows.Graphics;
@@ -38,9 +39,11 @@ namespace Lvhang.WindowsCapture
             _device.Dispose();
         }
 
-        public event Action<Direct3D11CaptureFrame> OnFrameArrived;
+        public event Action<Direct3D11CaptureFrame,Action> OnFrameArrived;
 
-        public async void PickAndCapture()
+        //public event Func<Direct3D11CaptureFrame, Task> OnFrameArrivedAsync;
+
+        public async void PickAndCapture(Action beforeFirstFrame = null)
         {
             try
             {
@@ -63,8 +66,9 @@ namespace Lvhang.WindowsCapture
 
                     _session = _framePool.CreateCaptureSession(item);
 
-                    _framePool.FrameArrived += _framePool_FrameArrived;
+                    if (beforeFirstFrame is not null) beforeFirstFrame();
 
+                    _framePool.FrameArrived += _framePool_FrameArrived;
                     _session.StartCapture();
                 }
             }
@@ -72,6 +76,14 @@ namespace Lvhang.WindowsCapture
             {
                 throw;
             }
+        }
+
+
+        private bool _keepSendingFrame = true;
+
+        private void nextFrame()
+        {
+            _keepSendingFrame = true;
         }
 
         private void _framePool_FrameArrived(Direct3D11CaptureFramePool sender, object args)
@@ -85,11 +97,15 @@ namespace Lvhang.WindowsCapture
                     _lastSize = frame.ContentSize;
                 }
 
-                if ((DateTime.Now - _last_frame_send_time).TotalMilliseconds >= _options.MinFrameInterval)
+                if (_keepSendingFrame && (DateTime.Now - _last_frame_send_time).TotalMilliseconds >= _options.MinFrameInterval)
                 {
-                    var bitmap_surface = Direct3D11Helper.CreateSharpDXTexture2D(frame.Surface);
+                    //var bitmap_surface = Direct3D11Helper.CreateSharpDXTexture2D(frame.Surface);
+                    //当一帧发送后设置 _keepSendingFrame 为false， 让client 控制是否发送下一帧
+                    _keepSendingFrame = false;
+                    OnFrameArrived(frame, nextFrame);
 
-                    OnFrameArrived(frame);
+                    //await OnFrameArrivedAsync(frame);
+
                     _last_frame_send_time = DateTime.Now;
                 }
 

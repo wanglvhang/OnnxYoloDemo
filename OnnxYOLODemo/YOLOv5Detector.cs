@@ -1,9 +1,11 @@
 ﻿using Lvhang.WindowsCapture;
 using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,19 +46,19 @@ namespace OnnxYOLODemo
         public ProcessDetail Inference(Bitmap img)
         {
 
-            var ptime = new ProcessDetail();
+            //var ptime = new ProcessDetail();
 
             var sw = new Stopwatch();
             sw.Start();
             var resized_image = img.Resize(640, 640);
             sw.Stop();
-            ptime.ResizeBitmapCost = sw.ElapsedMilliseconds;
+            var pd = new ProcessDetail(Thread.CurrentThread.ManagedThreadId, sw.ElapsedMilliseconds, 0, 0, 0);
 
 
             sw.Reset(); sw.Start();
             var input_tensor = resized_image.FastToOnnxTensor_13hw();
             sw.Stop();
-            ptime.BitmapToTensorCost = sw.ElapsedMilliseconds;
+            pd = pd with { ToTensorCost = sw.ElapsedMilliseconds };
 
 
             var container = new List<NamedOnnxValue>();
@@ -66,9 +68,21 @@ namespace OnnxYOLODemo
             sw.Reset(); sw.Start();
             using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _onnxSession.Run(container);
             sw.Stop();
-            ptime.InferenceCost = sw.ElapsedMilliseconds;
+            pd = pd with { InferenceCost = sw.ElapsedMilliseconds };
 
-            return ptime;
+
+            var resultsArray = results.ToArray();
+            Tensor<float> tensors = resultsArray[0].AsTensor<float>();
+            Tensor<float> tensors1 = resultsArray[1].AsTensor<float>();
+            Tensor<float> tensors2 = resultsArray[2].AsTensor<float>();
+            Tensor<float> tensors3 = resultsArray[3].AsTensor<float>();
+
+
+            var array = tensors.ToArray();
+
+
+
+            return pd;
 
         }
 
@@ -87,6 +101,7 @@ namespace OnnxYOLODemo
 
             });
         }
+
 
         public void Stop()
         {
