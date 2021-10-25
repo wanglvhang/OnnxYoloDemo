@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OnnxYOLODemo"
         mc:Ignorable="d"
-        Title="MainWindow" Height="618" Width="900" Loaded="Window_Loaded">
+        Title="MainWindow" Height="708" Width="1000" Loaded="Window_Loaded">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"></ColumnDefinition>

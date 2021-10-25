@@ -19,7 +19,6 @@ namespace OnnxYOLODemo
 
         private WindowsCaptureSession _captureSession;
         private IYOLODetector _yolovDetector;
-        //private string _modelPath;
 
         public MainWindow()
         {
@@ -29,12 +28,6 @@ namespace OnnxYOLODemo
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            //this.cvWindow = new OpenCvSharp.Window();
-
-            //var array = new float[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 };
-            //var ms = new Memory<float>(array);
-
-            //var tensor = new DenseTensor<float>(ms, new int[] { 1, 2, 3, 3 });
 
             var os = Environment.OSVersion;
 
@@ -53,7 +46,7 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov3_Click(object sender, RoutedEventArgs e)
         {
-            this._captureSession?.StopCapture();
+            this.StopCapture();
 
             this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
@@ -77,7 +70,7 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov4_Click(object sender, RoutedEventArgs e)
         {
-            this._captureSession?.StopCapture();
+            this.StopCapture();
 
             this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
@@ -98,9 +91,9 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov5_Click(object sender, RoutedEventArgs e)
         {
-            this._captureSession?.StopCapture();
+            this.StopCapture();
 
-            this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5s.onnx", true);
+            this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5n.onnx", true);
 
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
@@ -113,7 +106,7 @@ namespace OnnxYOLODemo
 
         private void btnStartCaptureYolov5_cpu_Click(object sender, RoutedEventArgs e)
         {
-            this._captureSession?.StopCapture();
+            this.StopCapture();
 
             this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5s.onnx", false);
 
@@ -133,7 +126,7 @@ namespace OnnxYOLODemo
 
         private void btnStopCapture_Click(object sender, RoutedEventArgs e)
         {
-            _captureSession?.StopCapture();
+            this.StopCapture();
         }
 
 
@@ -229,6 +222,13 @@ namespace OnnxYOLODemo
             }
 
         }
+
+        public void StopCapture()
+        {
+            _frameCount = 0;
+            _captureSession?.StopCapture();
+        }
+
 
     }
 }

@@ -41,7 +41,6 @@ namespace OnnxYOLODemo
 
         public ProcessDetail Inference(Bitmap bitmapOrg)
         {
-            //var ptime = new ProcessDetail();
 
             var sw = new Stopwatch();
             sw.Start();
@@ -56,41 +55,21 @@ namespace OnnxYOLODemo
             pd = pd with { ToTensorCost = sw.ElapsedMilliseconds };
 
 
-            var container = new List<NamedOnnxValue>();
-            container.Add(NamedOnnxValue.CreateFromTensor("input_1:0", input_tensor));
-
 
             sw.Reset(); sw.Start();
+            var container = new List<NamedOnnxValue>();
+            container.Add(NamedOnnxValue.CreateFromTensor("input_1:0", input_tensor));
             using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _onnxSession.Run(container);
             sw.Stop();
             pd = pd with { InferenceCost = sw.ElapsedMilliseconds };
 
 
+
             sw.Reset(); sw.Start();
             var resultsArray = results.ToArray();
             Tensor<float> tensors = resultsArray[0].AsTensor<float>();
-
-            var detectioinResults = DetectionResult.ParseResults(tensors.ToArray());
-
-            System.Drawing.Font font = new Font("Arial", 24f, System.Drawing.FontStyle.Bold);
-
-            using (var g = Graphics.FromImage(bitmapOrg))
-            {
-                foreach (DetectionResult p in detectioinResults)
-                {
-                    int top = (int)(p.bbox[0] * bitmapOrg.Height);
-                    int left = (int)(p.bbox[1] * bitmapOrg.Width);
-                    int bottom = (int)(p.bbox[2] * bitmapOrg.Height);
-                    int right = (int)(p.bbox[3] * bitmapOrg.Width);
-
-
-                    g.DrawRectangle(new System.Drawing.Pen(System.Drawing.Brushes.Blue, 4),
-                        new System.Drawing.Rectangle(left, top, right - left, bottom - top));
-
-                    g.DrawString($"{p.label}, {p.prob:0.00}", font, System.Drawing.Brushes.Blue, new System.Drawing.PointF(left, top));
-                }
-
-            }
+            var detectioinResults = this.parseYoloPredictions(tensors.ToArray());
+            bitmapOrg.DrawYoloPrediction(detectioinResults, Brushes.Green, Brushes.White);
             sw.Stop();
             pd = pd with { DrawCost = sw.ElapsedMilliseconds };
 
@@ -103,14 +82,13 @@ namespace OnnxYOLODemo
         {
             return Task.Run(() =>
             {
-                ProcessDetail ptime = null;
-                if (this._sessionMutex.WaitOne())
+                lock (this._onnxSession)
                 {
-                    ptime = Inference(bitmapOrg);
-                    this._sessionMutex.ReleaseMutex();
+
+                    var ptime = Inference(bitmapOrg);
+                    return ptime;
 
                 }
-                return ptime;
 
             });
         }
@@ -123,101 +101,12 @@ namespace OnnxYOLODemo
         }
 
 
-    }
-
-
-
-    public class DetectionResult
-    {
-        private static readonly string[] _labels =
-         {
-                "person",
-                "bicycle",
-                "car",
-                "motorbike",
-                "aeroplane",
-                "bus",
-                "train",
-                "truck",
-                "boat",
-                "traffic light",
-                "fire hydrant",
-                "stop sign",
-                "parking meter",
-                "bench",
-                "bird",
-                "cat",
-                "dog",
-                "horse",
-                "sheep",
-                "cow",
-                "elephant",
-                "bear",
-                "zebra",
-                "giraffe",
-                "backpack",
-                "umbrella",
-                "handbag",
-                "tie",
-                "suitcase",
-                "frisbee",
-                "skis",
-                "snowboard",
-                "sports ball",
-                "kite",
-                "baseball bat",
-                "baseball glove",
-                "skateboard",
-                "surfboard",
-                "tennis racket",
-                "bottle",
-                "wine glass",
-                "cup",
-                "fork",
-                "knife",
-                "spoon",
-                "bowl",
-                "banana",
-                "apple",
-                "sandwich",
-                "orange",
-                "broccoli",
-                "carrot",
-                "hot dog",
-                "pizza",
-                "donut",
-                "cake",
-                "chair",
-                "sofa",
-                "pottedplant",
-                "bed",
-                "diningtable",
-                "toilet",
-                "tvmonitor",
-                "laptop",
-                "mouse",
-                "remote",
-                "keyboard",
-                "cell phone",
-                "microwave",
-                "oven",
-                "toaster",
-                "sink",
-                "refrigerator",
-                "book",
-                "clock",
-                "vase",
-                "scissors",
-                "teddy bear",
-                "hair drier",
-                "toothbrush"
-        };
-        public static  List<DetectionResult> ParseResults(float[] results)
+        private List<YoloPrediction> parseYoloPredictions(float[] results)
         {
             int c_values = 84;
             int c_boxes = results.Length / c_values;
             float confidence_threshold = 0.5f;
-            List<DetectionResult> detections = new List<DetectionResult>();
+            List<YoloPrediction> detections = new List<YoloPrediction>();
             for (int i_box = 0; i_box < c_boxes; i_box++)
             {
                 float max_prob = 0.0f;
@@ -233,86 +122,112 @@ namespace OnnxYOLODemo
                 }
                 if (max_prob > confidence_threshold)
                 {
-                    List<float> bbox = new List<float>();
-                    bbox.Add(results[i_box * c_values + 0]);
-                    bbox.Add(results[i_box * c_values + 1]);
-                    bbox.Add(results[i_box * c_values + 2]);
-                    bbox.Add(results[i_box * c_values + 3]);
 
-                    detections.Add(new DetectionResult()
+                    var bbox = new BBox(results[i_box * c_values + 1], results[i_box * c_values + 0], results[i_box * c_values + 3], results[i_box * c_values + 2]);
+
+                    detections.Add(new YoloPrediction()
                     {
-                        label = _labels[label_index],
-                        bbox = bbox,
-                        prob = max_prob
+                        Box = bbox,
+                        Confidence = max_prob,
+                        LabelIndex = label_index,
+                        LabelName = YoloPrediction.YoloLabes[label_index]
                     });
                 }
             }
 
             // Non-maximum Suppression(NMS), a technique which filters the proposals 
             // based on Intersection over Union(IOU)
-            return NMS(detections);
-        }
-
-        private static float ComputeIOU(DetectionResult DRa, DetectionResult DRb)
-        {
-            float ay1 = DRa.bbox[0];
-            float ax1 = DRa.bbox[1];
-            float ay2 = DRa.bbox[2];
-            float ax2 = DRa.bbox[3];
-            float by1 = DRb.bbox[0];
-            float bx1 = DRb.bbox[1];
-            float by2 = DRb.bbox[2];
-            float bx2 = DRb.bbox[3];
-
-            Debug.Assert(ay1 < ay2);
-            Debug.Assert(ax1 < ax2);
-            Debug.Assert(by1 < by2);
-            Debug.Assert(bx1 < bx2);
-
-            // determine the coordinates of the intersection rectangle
-            float x_left = Math.Max(ax1, bx1);
-            float y_top = Math.Max(ay1, by1);
-            float x_right = Math.Min(ax2, bx2);
-            float y_bottom = Math.Min(ay2, by2);
-
-            if (x_right < x_left || y_bottom < y_top)
-                return 0;
-            float intersection_area = (x_right - x_left) * (y_bottom - y_top);
-            float bb1_area = (ax2 - ax1) * (ay2 - ay1);
-            float bb2_area = (bx2 - bx1) * (by2 - by1);
-            float iou = intersection_area / (bb1_area + bb2_area - intersection_area);
-
-            Debug.Assert(iou >= 0 && iou <= 1);
-            return iou;
+            return YoloPrediction.NMS(detections);
         }
 
 
-        private static List<DetectionResult> NMS(IReadOnlyList<DetectionResult> detections,
-            float IOU_threshold = 0.45f,
-            float score_threshold = 0.3f)
-        {
-            List<DetectionResult> final_detections = new List<DetectionResult>();
-            for (int i = 0; i < detections.Count; i++)
-            {
-                int j = 0;
-                for (j = 0; j < final_detections.Count; j++)
-                {
-                    if (ComputeIOU(final_detections[j], detections[i]) > IOU_threshold)
-                    {
-                        break;
-                    }
-                }
-                if (j == final_detections.Count)
-                {
-                    final_detections.Add(detections[i]);
-                }
-            }
-            return final_detections;
-        }
-
-
-        public string label;
-        public List<float> bbox;
-        public double prob;
     }
+
+
+
+
+    //    private static readonly string[] _labels =
+    //     {
+    //            "person",
+    //            "bicycle",
+    //            "car",
+    //            "motorbike",
+    //            "aeroplane",
+    //            "bus",
+    //            "train",
+    //            "truck",
+    //            "boat",
+    //            "traffic light",
+    //            "fire hydrant",
+    //            "stop sign",
+    //            "parking meter",
+    //            "bench",
+    //            "bird",
+    //            "cat",
+    //            "dog",
+    //            "horse",
+    //            "sheep",
+    //            "cow",
+    //            "elephant",
+    //            "bear",
+    //            "zebra",
+    //            "giraffe",
+    //            "backpack",
+    //            "umbrella",
+    //            "handbag",
+    //            "tie",
+    //            "suitcase",
+    //            "frisbee",
+    //            "skis",
+    //            "snowboard",
+    //            "sports ball",
+    //            "kite",
+    //            "baseball bat",
+    //            "baseball glove",
+    //            "skateboard",
+    //            "surfboard",
+    //            "tennis racket",
+    //            "bottle",
+    //            "wine glass",
+    //            "cup",
+    //            "fork",
+    //            "knife",
+    //            "spoon",
+    //            "bowl",
+    //            "banana",
+    //            "apple",
+    //            "sandwich",
+    //            "orange",
+    //            "broccoli",
+    //            "carrot",
+    //            "hot dog",
+    //            "pizza",
+    //            "donut",
+    //            "cake",
+    //            "chair",
+    //            "sofa",
+    //            "pottedplant",
+    //            "bed",
+    //            "diningtable",
+    //            "toilet",
+    //            "tvmonitor",
+    //            "laptop",
+    //            "mouse",
+    //            "remote",
+    //            "keyboard",
+    //            "cell phone",
+    //            "microwave",
+    //            "oven",
+    //            "toaster",
+    //            "sink",
+    //            "refrigerator",
+    //            "book",
+    //            "clock",
+    //            "vase",
+    //            "scissors",
+    //            "teddy bear",
+    //            "hair drier",
+    //            "toothbrush"
+    //    };
+
 }

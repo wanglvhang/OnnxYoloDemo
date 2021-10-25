@@ -200,35 +200,30 @@ namespace OnnxYOLODemo
         }
 
 
-        //public static Tensor<float> FastToOnnxTensor_13wh(this Bitmap source)
-        //{
-        //    var floatArray = new float[source.Width * source.Height * 3];
+        public static void DrawYoloPrediction(this Bitmap source, List<YoloPrediction> predictions,  System.Drawing.Brush boxColor, System.Drawing.Brush labelColor)
+        {
+            if (predictions is null || predictions.Count == 0) return;
 
-        //    var bitmap_data = source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-        //    var bitmap_bytes = new byte[Math.Abs(bitmap_data.Stride) * source.Height];
+            System.Drawing.Font font = new Font("Arial", 22f, System.Drawing.FontStyle.Regular);
+            using (var g = Graphics.FromImage(source))
+            {
+                foreach(var p in predictions)
+                {
 
-        //    Marshal.Copy(bitmap_data.Scan0, bitmap_bytes, 0, bitmap_bytes.Length);
+                    int top = (int)(p.Box.MinY * source.Height);
+                    int left = (int)(p.Box.MinX * source.Width);
+                    int bottom = (int)(p.Box.MaxY * source.Height);
+                    int right = (int)(p.Box.MaxX * source.Width);
 
-        //    int total_pixels_count = source.Width * source.Height;
+                    g.DrawRectangle(new System.Drawing.Pen(boxColor, 3),
+                        new System.Drawing.Rectangle(left, top, right - left, bottom - top));
 
+                    g.DrawString($"{p.LabelName}, {p.Confidence:0.00}", font, labelColor, new System.Drawing.PointF(left, top));
 
-        //    Parallel.For(0, total_pixels_count, (p_idx, state) =>
-        //    {
+                }
+            }
 
-        //        var g_idx = p_idx + total_pixels_count;
-        //        var b_idx = p_idx + total_pixels_count * 2;
-
-        //        floatArray[p_idx] = bitmap_bytes[p_idx * 3 + 2] / 255f;//R
-        //        floatArray[g_idx] = bitmap_bytes[p_idx * 3 + 1] / 255f;//G
-        //        floatArray[b_idx] = bitmap_bytes[p_idx * 3] / 255f;//B
-
-        //    });
-
-        //    source.UnlockBits(bitmap_data);
-
-        //    return new DenseTensor<float>(new Memory<float>(floatArray), new int[] { 1, 3, source.Height, source.Width });
-
-        //}
+        }
 
 
 

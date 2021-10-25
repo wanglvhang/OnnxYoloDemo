@@ -52,15 +52,6 @@ namespace OnnxYOLODemo
 
             return Task.Run(() =>
             {
-                //ProcessDetail ptime = new ptime;
-                //if (this._sessionMutex.WaitOne())
-                //{
-                //    ptime = Inference(bitmapOrg);
-                //    this._sessionMutex.ReleaseMutex();
-
-                //}
-                //return ptime;
-
 
                 lock (this._onnxSession)
                 {
@@ -74,24 +65,20 @@ namespace OnnxYOLODemo
 
         public ProcessDetail Inference(Bitmap bitmapOrg)
         {
-            //var ptime = new ProcessDetail();
 
             var sw = new Stopwatch();
             sw.Start();
             var resized_image = bitmapOrg.Resize(416, 416);
             sw.Stop();
-            //ptime.ResizeBitmapCost = sw.ElapsedMilliseconds;
             var pd = new ProcessDetail(Thread.CurrentThread.ManagedThreadId, sw.ElapsedMilliseconds, 0, 0, 0);
 
 
             sw.Reset(); sw.Start();
             var input_tensor = resized_image.FastToOnnxTensor_13hw();
             sw.Stop();
-            //ptime.BitmapToTensorCost = sw.ElapsedMilliseconds;
             pd = pd with { ToTensorCost = sw.ElapsedMilliseconds };
 
 
-            //Get the Image Shape
             var image_shape = new DenseTensor<float>(new[] { 1, 2 });
             image_shape[0, 0] = bitmapOrg.Height;
             image_shape[0, 1] = bitmapOrg.Width;
@@ -105,7 +92,6 @@ namespace OnnxYOLODemo
             sw.Reset(); sw.Start();
             IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = _onnxSession.Run(container);
             sw.Stop();
-            //ptime.InferenceCost = sw.ElapsedMilliseconds;
             pd = pd with { InferenceCost = sw.ElapsedMilliseconds };
 
 
@@ -132,7 +118,7 @@ namespace OnnxYOLODemo
                                      boxes[indices[i], indices[i + 2], 0],
                                      boxes[indices[i], indices[i + 2], 3],
                                      boxes[indices[i], indices[i + 2], 2]),
-                    Class = LabelMap.Labels[out_classes[count]],
+                    Class = YOLOv3Labels[out_classes[count]],
                     Score = out_scores[count]
                 });
                 count++;
@@ -141,7 +127,6 @@ namespace OnnxYOLODemo
             // Put boxes, labels and confidence on image and save for viewing
             System.Drawing.Font font = new Font("Arial", 24f, System.Drawing.FontStyle.Bold);
 
-            //this.PrintOutput($"draw prediction:{p.Class}/{p.Score}  xmin:{p.Box.Xmin} xmax:{p.Box.Xmax} ymin:{p.Box.Ymin} ymax:{p.Box.Ymax} ");
             using (var g = Graphics.FromImage(bitmapOrg))
             {
                 foreach (var p in predictions)
@@ -158,7 +143,6 @@ namespace OnnxYOLODemo
             }
 
             sw.Stop();
-            //ptime.DrawResultCost = sw.ElapsedMilliseconds;
             pd = pd with { DrawCost = sw.ElapsedMilliseconds };
 
 
@@ -172,5 +156,113 @@ namespace OnnxYOLODemo
         }
 
 
+        public static readonly string[] YOLOv3Labels = new[] {
+            "person",
+            "bicycle",
+            "car",
+            "motorcycle",
+            "airplane",
+            "bus",
+            "train",
+            "truck",
+            "boat",
+            "traffic light",
+            "fire hydrant",
+            "stop sign",
+            "parking meter",
+            "bench",
+            "bird",
+            "cat",
+            "dog",
+            "horse",
+            "sheep",
+            "cow",
+            "elephant",
+            "bear",
+            "zebra",
+            "giraffe",
+            "backpack",
+            "umbrella",
+            "handbag",
+            "tie",
+            "suitcase",
+            "frisbee",
+            "skis",
+            "snowboard",
+            "sports ball",
+            "kite",
+            "baseball bat",
+            "baseball glove",
+            "skateboard",
+            "surfboard",
+            "tennis racket",
+            "bottle",
+            "wine glass",
+            "cup",
+            "fork",
+            "knife",
+            "spoon",
+            "bowl",
+            "banana",
+            "apple",
+            "sandwich",
+            "orange",
+            "broccoli",
+            "carrot",
+            "hot dog",
+            "pizza",
+            "donut",
+            "cake",
+            "chair",
+            "couch",
+            "potted plant",
+            "bed",
+            "dining table",
+            "toilet",
+            "tv",
+            "laptop",
+            "mouse",
+            "remote",
+            "keyboard",
+            "cell phone",
+            "microwave",
+            "oven",
+            "toaster",
+            "sink",
+            "refrigerator",
+            "book",
+            "clock",
+            "vase",
+            "scissors",
+            "teddy bear",
+            "hair drier",
+            "toothbrush"};
     }
+
+
+    public class Prediction
+    {
+        public Box Box { get; set; }
+        public string Class { get; set; }
+        public float Score { get; set; }
+    }
+
+    public class Box
+    {
+        public float Xmin { get; set; }
+        public float Ymin { get; set; }
+        public float Xmax { get; set; }
+        public float Ymax { get; set; }
+
+        public Box(float xmin, float ymin, float xmax, float ymax)
+        {
+            Xmin = xmin;
+            Ymin = ymin;
+            Xmax = xmax;
+            Ymax = ymax;
+
+        }
+    }
+
+
 }
