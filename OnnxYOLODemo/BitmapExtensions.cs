@@ -1,6 +1,4 @@
 ﻿using Microsoft.ML.OnnxRuntime.Tensors;
-using OpenCvSharp;
-using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,8 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Interop;
 using System.Windows.Media;
-using OpenCvSharp.Extensions;
-using Size = OpenCvSharp.Size;
 using Windows.Graphics.Capture;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;

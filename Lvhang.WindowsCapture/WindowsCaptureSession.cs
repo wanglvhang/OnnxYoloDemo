@@ -101,7 +101,7 @@ namespace Lvhang.WindowsCapture
                 {
                     //var bitmap_surface = Direct3D11Helper.CreateSharpDXTexture2D(frame.Surface);
                     //当一帧发送后设置 _keepSendingFrame 为false， 让client 控制是否发送下一帧
-                    _keepSendingFrame = false;
+                    _keepSendingFrame = !_options.IsManual;
                     OnFrameArrived(frame, nextFrame);
 
                     //await OnFrameArrivedAsync(frame);

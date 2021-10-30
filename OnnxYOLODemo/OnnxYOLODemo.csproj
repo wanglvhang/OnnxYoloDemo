@@ -26,8 +26,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AI.DirectML" Version="1.7.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.9.0" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.9.0" />
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.5.3.20210817" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +40,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Models\yolov4_raw.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Models\yolov5m.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Models\yolov5n.onnx">

@@ -12,6 +12,7 @@
     <PackageProjectUrl>https://github.com/wanglvhang/OnnxYoloDemo/tree/main/Lvhang.WindowsCapture</PackageProjectUrl>
     <RepositoryUrl>https://github.com/wanglvhang/OnnxYoloDemo/tree/main/Lvhang.WindowsCapture</RepositoryUrl>
     <RepositoryType>github</RepositoryType>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,6 +1,5 @@
 ﻿using Lvhang.WindowsCapture;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using OpenCvSharp.Extensions;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -47,21 +46,28 @@ namespace OnnxYOLODemo
         private void btnStartCaptureYolov3_Click(object sender, RoutedEventArgs e)
         {
             this.StopCapture();
+            var model_path = ".\\Models\\yolov3-10.onnx";
+            if (!File.Exists(model_path))
+            {
+                MessageBox.Show("未找到yolov3 onnx模型文件。请下载模型文件并复制到Models文件夹内。");
+                return;
+            }
 
             this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
                 MinFrameInterval = 0,
+                IsManual = true,
             });
 
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
             _captureSession.PickAndCapture(() =>
             {
-                this.PrintOutput("开始载入yolov3.onnx模型");
+                this.PrintOutput("开始载入yolov3-10.onnx模型");
                 var sw = new Stopwatch();
                 sw.Start();
-                this._yolovDetector = new YOLOv3Detector($".\\Models\\yolov3-10.onnx", true);
+                this._yolovDetector = new YOLOv3Detector(model_path, true);
                 sw.Stop();
                 this.PrintOutput($"载入完成，花费{sw.ElapsedMilliseconds}ms");
             });
@@ -71,7 +77,12 @@ namespace OnnxYOLODemo
         private void btnStartCaptureYolov4_Click(object sender, RoutedEventArgs e)
         {
             this.StopCapture();
-
+            var model_path = ".\\Models\\yolov4.onnx";
+            if (!File.Exists(model_path))
+            {
+                MessageBox.Show("未找到yolov4 onnx模型文件。请下载模型文件并复制到Models文件夹内。");
+                return;
+            }
             this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
@@ -83,7 +94,7 @@ namespace OnnxYOLODemo
                 this.PrintOutput("开始载入yolov4.onnx模型");
                 var sw = new Stopwatch();
                 sw.Start();
-                this._yolovDetector = new YOLOv4Detector($".\\Models\\yolov4.onnx");
+                this._yolovDetector = new YOLOv4Detector(model_path);
                 sw.Stop();
                 this.PrintOutput($"载入完成，花费{sw.ElapsedMilliseconds}ms");
             });
@@ -92,16 +103,28 @@ namespace OnnxYOLODemo
         private void btnStartCaptureYolov5_Click(object sender, RoutedEventArgs e)
         {
             this.StopCapture();
+            var model_path = ".\\Models\\yolov5m.onnx";
+            if (!File.Exists(model_path))
+            {
+                MessageBox.Show("未找到yolov5 onnx模型文件。请下载模型文件并复制到Models文件夹内。");
+                return;
+            }
 
-            this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5n.onnx", true);
-
+            this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
-                MinFrameInterval = 100,
+                MinFrameInterval = 0,
             });
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
-            _captureSession.PickAndCapture();
+            _captureSession.PickAndCapture(() => {
+                this.PrintOutput("开始载入yolov5.onnx模型");
+                var sw = new Stopwatch();
+                sw.Start();
+                this._yolovDetector = new YOLOv5Detector(model_path,true);
+                sw.Stop();
+                this.PrintOutput($"载入完成，花费{sw.ElapsedMilliseconds}ms");
+            });
         }
 
         private void btnStartCaptureYolov5_cpu_Click(object sender, RoutedEventArgs e)
