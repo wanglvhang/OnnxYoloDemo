@@ -94,7 +94,7 @@ namespace OnnxYOLODemo
                 this.PrintOutput("开始载入yolov4.onnx模型");
                 var sw = new Stopwatch();
                 sw.Start();
-                this._yolovDetector = new YOLOv4Detector(model_path);
+                this._yolovDetector = new YOLOv4Detector(model_path,true);
                 sw.Stop();
                 this.PrintOutput($"载入完成，花费{sw.ElapsedMilliseconds}ms");
             });
@@ -113,8 +113,9 @@ namespace OnnxYOLODemo
             this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
-                MinFrameInterval = 0,
-            });
+                MinFrameInterval = 10,
+                IsManual = true,
+            }) ;
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
             _captureSession.PickAndCapture(() => {
@@ -130,16 +131,29 @@ namespace OnnxYOLODemo
         private void btnStartCaptureYolov5_cpu_Click(object sender, RoutedEventArgs e)
         {
             this.StopCapture();
+            var model_path = ".\\Models\\yolov5m.onnx";
+            if (!File.Exists(model_path))
+            {
+                MessageBox.Show("未找到yolov5 onnx模型文件。请下载模型文件并复制到Models文件夹内。");
+                return;
+            }
 
-            this._yolovDetector = new YOLOv5Detector($".\\Models\\yolov5s.onnx", false);
-
+            this.PrintOutput("初始化窗口抓取组件...");
             _captureSession = new WindowsCaptureSession(this, new WindowsCaptureSessionOptions()
             {
-                MinFrameInterval = 100,
+                MinFrameInterval = 10,
+                IsManual = true,
             });
             _captureSession.OnFrameArrived += CaptureSession_OnFrameArrived;
 
-            _captureSession.PickAndCapture();
+            _captureSession.PickAndCapture(() => {
+                this.PrintOutput("开始载入yolov5.onnx模型");
+                var sw = new Stopwatch();
+                sw.Start();
+                this._yolovDetector = new YOLOv5Detector(model_path, false);
+                sw.Stop();
+                this.PrintOutput($"载入完成，花费{sw.ElapsedMilliseconds}ms");
+            });
         }
 
 
@@ -155,6 +169,7 @@ namespace OnnxYOLODemo
 
         private long _frameCount = 0;
         private DateTime _frameStartTime;
+        private long _total_onnx_inference_time;
 
 
         private async void CaptureSession_OnFrameArrived(Windows.Graphics.Capture.Direct3D11CaptureFrame frame, Action nextFrame)
@@ -163,6 +178,7 @@ namespace OnnxYOLODemo
             if (_frameCount == 0)
             {
                 _frameStartTime = DateTime.Now;
+                
             }
 
             try
@@ -186,13 +202,13 @@ namespace OnnxYOLODemo
                 sw.Stop();
                 var showbitmap = sw.ElapsedMilliseconds;
 
-                _frameCount++;
-
                 var totalSeconds = (DateTime.Now - _frameStartTime).TotalSeconds;
+
+                _frameCount++;
                 if (totalSeconds != 0)
                 {
-                    //PrintOutput($"FPS:{ _frameCount / totalSeconds }");
-                    this.PrintOutput($"ftb:{ftb}ms|thread:<{pd.ThreadId}>|detect:{detect}ms(resize:{pd.ResizeCost}|totensor:{pd.ToTensorCost}|onnx:{pd.InferenceCost}|draw:{pd.DrawCost})|show:{showbitmap}ms[total:{ftb + detect + showbitmap}ms,avg FPS:{(_frameCount / totalSeconds).ToString("0.00") }]");
+                    _total_onnx_inference_time += pd.InferenceCost;
+                    this.PrintOutput($"ftb:{ftb}ms|thread:<{pd.ThreadId}>|detect:{detect}ms(resize:{pd.ResizeCost}|totensor:{pd.ToTensorCost}|onnx:{pd.InferenceCost}|draw:{pd.DrawCost})|show:{showbitmap}ms[total:{ftb + detect + showbitmap}ms,avg FPS:{(_frameCount / totalSeconds).ToString("0.00") }],avg onnx:{(_total_onnx_inference_time/_frameCount).ToString("0.00")}ms");
                 }
 
                 nextFrame();

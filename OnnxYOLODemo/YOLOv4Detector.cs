@@ -18,23 +18,24 @@ namespace OnnxYOLODemo
         private InferenceSession _onnxSession;
         private Mutex _sessionMutex = new Mutex();
 
-        public YOLOv4Detector(string model_path)
+        public YOLOv4Detector(string model_path,bool useDirectML)
         {
             // Session Options
             SessionOptions options = new SessionOptions();
             options.LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR;
-            //options.EnableProfiling = true;
-            //options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
-            //options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_DISABLE_ALL;
-            //options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov4.onnx";
-            //options.AppendExecutionProvider_OpenVINO(@"MYRIAD_FP16");
-            options.AppendExecutionProvider_DML(0);
-            //options.AppendExecutionProvider_CPU(0);
+
+            if (useDirectML)
+            {
+                options.AppendExecutionProvider_DML(0);
+            }
+            else
+            {
+                options.AppendExecutionProvider_CPU(0);
+            }
+
 
             // create inference session
             _onnxSession = new InferenceSession(model_path, options);
-
-            //var providers = OrtEnv.Instance().GetAvailableProviders();
 
         }
 
