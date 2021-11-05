@@ -1,3 +1,6 @@
+
+nuget package : https://www.nuget.org/packages/Lvhang.WindowsCapture/
+
 this package is for windows only, so please make sure your porject's TFM is later then net5.0-windows10.0.17763 to make sure install successfully.
 
 \<TargetFramework>net5.0-windows10.0.17763\</TargetFramework>
