@@ -10,7 +10,7 @@ this package is for windows only, so please make sure your porject's TFM is late
 * fix a bug which the ToBitmap extension method not work on some hardware.
 * add IsManual options, by default IsManual is true and you need to call nextFrame to get next frame.
 * add nextFrame action in OnFrameArrived to control if send next frame.
-* wehn you call PickAndCapture, you can pass an action that will run after user choose a windows/desktop and before receive fist frame. 
+* when you call PickAndCapture, you can pass an action that will run after user choose a windows/desktop and before receive first frame. 
 
 sample code:
 
