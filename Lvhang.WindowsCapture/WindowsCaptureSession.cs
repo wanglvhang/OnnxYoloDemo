@@ -41,8 +41,6 @@ namespace Lvhang.WindowsCapture
 
         public event Action<Direct3D11CaptureFrame,Action> OnFrameArrived;
 
-        //public event Func<Direct3D11CaptureFrame, Task> OnFrameArrivedAsync;
-
         public async void PickAndCapture(Action beforeFirstFrame = null)
         {
             try
