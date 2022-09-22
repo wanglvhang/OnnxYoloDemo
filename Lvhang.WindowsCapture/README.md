@@ -1,8 +1,16 @@
-\*\*1.1.0 (2021/10/30) release note: \*\*
+
+nuget package : https://www.nuget.org/packages/Lvhang.WindowsCapture/
+
+this package is for windows only, so please make sure your porject's TFM is later then net5.0-windows10.0.17763 to make sure install successfully.
+
+\<TargetFramework>net5.0-windows10.0.17763\</TargetFramework>
+
+**1.1.0 (2021/10/30) release note:**
 
 * fix a bug which the ToBitmap extension method not work on some hardware.
-* add IsManual options
+* add IsManual options, by default IsManual is true and you need to call nextFrame to get next frame.
 * add nextFrame action in OnFrameArrived to control if send next frame.
+* when you call PickAndCapture, you can pass an action that will run after user choose a windows/desktop and before receive first frame. 
 
 sample code:
 
