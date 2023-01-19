@@ -24,8 +24,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AI.DirectML" Version="1.9.1" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.12.1" />
+    <PackageReference Include="Microsoft.AI.DirectML" Version="1.10.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.13.1" />
   </ItemGroup>
 
   <ItemGroup>
