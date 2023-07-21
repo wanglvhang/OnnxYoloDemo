@@ -35,7 +35,7 @@ namespace OnnxYOLODemo
                 options.ExecutionMode = ExecutionMode.ORT_PARALLEL;
                 options.InterOpNumThreads = 6;
                 options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
-                options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov5m.onnx";
+                //options.OptimizedModelFilePath = ".\\Models\\optimized\\opt_yolov5m.onnx";
                 options.AppendExecutionProvider_CPU(0);
             }
 
