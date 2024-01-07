@@ -19,7 +19,9 @@ namespace OnnxYOLODemo
         public static List<YoloPrediction> NMS(List<YoloPrediction> predictions, float IOU_threshold = 0.45f, float score_threshold = 0.3f)
         {
             List<YoloPrediction> final_predications = new List<YoloPrediction>();
-
+            // sort
+            predictions.Sort((a, b) => a.Confidence.CompareTo(b.Confidence));
+            predictions.Reverse();
             for (int i = 0; i < predictions.Count; i++)
             {
                 int j = 0;
